@@ -1,6 +1,8 @@
 #include <PlatformDriverEthercat.h>
 #include <sys/stat.h>
-#include <base-logging/Logging.hpp>
+#include <rclcpp/rclcpp.hpp>
+#include <sstream>
+static std::stringstream ss;
 #include <base/Time.hpp>
 #include <base/commands/Joints.hpp>
 #include <set>
@@ -132,15 +134,19 @@ bool Task::validateConfig()
     struct stat buffer;
     if (stat(("/sys/class/net/" + network_interface_).c_str(), &buffer) != 0)
     {
-        LOG_ERROR_S << ": Interface " << network_interface_
+        ss << ": Interface " << network_interface_
                     << " does not exist";
+        RCLCPP_ERROR(rclcpp::get_logger(__PRETTY_FUNCTION__), "%s", ss.str().c_str());
+        ss.str(""); ss.clear();
         return false;
     }
 
     // Check if num slaves is valid
     if (num_slaves_ <= 0)
     {
-        LOG_ERROR_S << ": Invalid number of slaves " << num_slaves_;
+        ss << ": Invalid number of slaves " << num_slaves_;
+        RCLCPP_ERROR(rclcpp::get_logger(__PRETTY_FUNCTION__), "%s", ss.str().c_str());
+        ss.str(""); ss.clear();
         return false;
     }
 
@@ -154,14 +160,18 @@ bool Task::validateConfig()
         // Check if slave id is valid
         if (slave_id <= 0)
         {
-            LOG_ERROR_S << ": Invalid slave id " << slave_id;
+            ss << ": Invalid slave id " << slave_id;
+            RCLCPP_ERROR(rclcpp::get_logger(__PRETTY_FUNCTION__), "%s", ss.str().c_str());
+            ss.str(""); ss.clear();
             return false;
         }
 
         // Check if slave id already exists
         if (id_set.find(slave_id) != id_set.end())
         {
-            LOG_ERROR_S << ": Slave id " << slave_id << " already exists";
+            ss << ": Slave id " << slave_id << " already exists";
+            RCLCPP_ERROR(rclcpp::get_logger(__PRETTY_FUNCTION__), "%s", ss.str().c_str());
+            ss.str(""); ss.clear();
             return false;
         }
 
@@ -170,7 +180,9 @@ bool Task::validateConfig()
         // Check if device name already exists
         if (name_set.find(name) != name_set.end())
         {
-            LOG_ERROR_S << ": Device name " << name << " already exists";
+            ss << ": Device name " << name << " already exists";
+            RCLCPP_ERROR(rclcpp::get_logger(__PRETTY_FUNCTION__), "%s", ss.str().c_str());
+            ss.str(""); ss.clear();
             return false;
         }
 
@@ -201,7 +213,9 @@ bool Task::validateConfig()
         // Check if joint name already exists
         if (joint_set.find(name) != joint_set.end())
         {
-            LOG_ERROR_S << ": Joint name " << name << " already exists";
+            ss << ": Joint name " << name << " already exists";
+            RCLCPP_ERROR(rclcpp::get_logger(__PRETTY_FUNCTION__), "%s", ss.str().c_str());
+            ss.str(""); ss.clear();
             return false;
         }
         joint_set.insert(name);
@@ -209,16 +223,20 @@ bool Task::validateConfig()
         // Check if drive name does not exist
         if (drive_set.find(drive) == drive_set.end())
         {
-            LOG_ERROR_S << ": Drive " << drive << " for joint " << name
+            ss << ": Drive " << drive << " for joint " << name
                         << " does not exist";
+            RCLCPP_ERROR(rclcpp::get_logger(__PRETTY_FUNCTION__), "%s", ss.str().c_str());
+            ss.str(""); ss.clear();
             return false;
         }
 
         // Check if the same drive is already in use for another joint of the current set
         if (current_set.find(drive) != current_set.end())
         {
-            LOG_ERROR_S << ": Drive " << drive
+            ss << ": Drive " << drive
                         << " already in use with another joint of the same type";
+            RCLCPP_ERROR(rclcpp::get_logger(__PRETTY_FUNCTION__), "%s", ss.str().c_str());
+            ss.str(""); ss.clear();
             return false;
         }
 

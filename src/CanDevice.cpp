@@ -1,7 +1,9 @@
 #include <iostream>
 
 #include "CanDevice.h"
-#include "base-logging/Logging.hpp"
+#include "rclcpp/rclcpp.hpp"
+#include <sstream>
+static std::stringstream ss;
 
 using namespace platform_driver_ethercat;
 

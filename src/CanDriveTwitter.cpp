@@ -5,7 +5,9 @@
 
 #include "CanDriveTwitter.h"
 #include "EthercatInterface.h"
-#include "base-logging/Logging.hpp"
+#include "rclcpp/rclcpp.hpp"
+#include <sstream>
+static std::stringstream ss;
 
 using namespace platform_driver_ethercat;
 
@@ -25,7 +27,9 @@ CanDriveTwitter::~CanDriveTwitter() {}
 
 bool CanDriveTwitter::configure()
 {
-    LOG_DEBUG_S << __PRETTY_FUNCTION__ << ": Configuring drive " << device_name_ << " ...";
+    ss << ": Configuring drive " << device_name_ << " ...";
+    RCLCPP_DEBUG(rclcpp::get_logger(__PRETTY_FUNCTION__), "%s", ss.str().c_str());
+    ss.str(""); ss.clear();
 
     typedef struct SdoWrite
     {
@@ -135,12 +139,16 @@ bool CanDriveTwitter::configure()
 
     if (success)
     {
-        LOG_INFO_S << __PRETTY_FUNCTION__ << ": Drive " << device_name_ << " configured";
+        ss << ": Drive " << device_name_ << " configured";
+        RCLCPP_INFO(rclcpp::get_logger(__PRETTY_FUNCTION__), "%s", ss.str().c_str());
+        ss.str(""); ss.clear();
         return true;
     }
     else
     {
-        LOG_ERROR_S << __PRETTY_FUNCTION__ << ": Failed to configure drive " << device_name_;
+        ss << ": Failed to configure drive " << device_name_;
+        RCLCPP_ERROR(rclcpp::get_logger(__PRETTY_FUNCTION__), "%s", ss.str().c_str());
+        ss.str(""); ss.clear();
         return false;
     }
 }
@@ -160,7 +168,9 @@ void CanDriveTwitter::setOutputPdo(unsigned char* output_pdo)
 
 bool CanDriveTwitter::startup()
 {
-    LOG_DEBUG_S << __PRETTY_FUNCTION__ << ": Starting up drive " << device_name_ << " ...";
+    ss << ": Starting up drive " << device_name_ << " ...";
+    RCLCPP_DEBUG(rclcpp::get_logger(__PRETTY_FUNCTION__), "%s", ss.str().c_str());
+    ss.str(""); ss.clear();
 
     DriveState state = readDriveState();
     int cnt = 10000;
@@ -192,20 +202,26 @@ bool CanDriveTwitter::startup()
 
         if (cnt-- == 0)
         {
-            LOG_ERROR_S << __PRETTY_FUNCTION__ << ": Could not start up drive " << device_name_
+            ss << ": Could not start up drive " << device_name_
                         << ". Last state was " << state;
+            RCLCPP_ERROR(rclcpp::get_logger(__PRETTY_FUNCTION__), "%s", ss.str().c_str());
+            ss.str(""); ss.clear();
             return false;
         }
     }
 
-    LOG_INFO_S << __PRETTY_FUNCTION__ << ": Drive " << device_name_ << " started up";
+    ss << ": Drive " << device_name_ << " started up";
+    RCLCPP_INFO(rclcpp::get_logger(__PRETTY_FUNCTION__), "%s", ss.str().c_str());
+    ss.str(""); ss.clear();
 
     return true;
 }
 
 bool CanDriveTwitter::shutdown()
 {
-    LOG_DEBUG_S << __PRETTY_FUNCTION__ << ": Shutting down drive " << device_name_ << " ...";
+    ss << ": Shutting down drive " << device_name_ << " ...";
+    RCLCPP_DEBUG(rclcpp::get_logger(__PRETTY_FUNCTION__), "%s", ss.str().c_str());
+    ss.str(""); ss.clear();
 
     DriveState state = readDriveState();
     int cnt = 1000;
@@ -237,13 +253,17 @@ bool CanDriveTwitter::shutdown()
 
         if (cnt-- == 0)
         {
-            LOG_ERROR_S << __PRETTY_FUNCTION__ << ": Could not shut down drive " << device_name_
+            ss << ": Could not shut down drive " << device_name_
                         << ". Last state was " << state;
+            RCLCPP_ERROR(rclcpp::get_logger(__PRETTY_FUNCTION__), "%s", ss.str().c_str());
+            ss.str(""); ss.clear();
             return false;
         }
     }
 
-    LOG_INFO_S << __PRETTY_FUNCTION__ << ": Drive " << device_name_ << " shut down";
+    ss << ": Drive " << device_name_ << " shut down";
+    RCLCPP_INFO(rclcpp::get_logger(__PRETTY_FUNCTION__), "%s", ss.str().c_str());
+    ss.str(""); ss.clear();
 
     return true;
 }
@@ -272,9 +292,11 @@ bool CanDriveTwitter::commandOperationMode(CanDriveTwitter::OperationMode mode)
     {
         if (cnt-- == 0)
         {
-            LOG_ERROR_S << __PRETTY_FUNCTION__ << ": Could not set operation mode for drive "
+            ss << ": Could not set operation mode for drive "
                         << device_name_ << ". Current mode is " << current_mode
                         << ". Requested mode is " << mode << ".";
+            RCLCPP_ERROR(rclcpp::get_logger(__PRETTY_FUNCTION__), "%s", ss.str().c_str());
+            ss.str(""); ss.clear();
             return false;
         }
 
@@ -282,8 +304,10 @@ bool CanDriveTwitter::commandOperationMode(CanDriveTwitter::OperationMode mode)
         current_mode = readOperationMode();
     }
 
-    LOG_DEBUG_S << __PRETTY_FUNCTION__ << ": Successfully changed operation mode for drive "
+    ss << ": Successfully changed operation mode for drive "
                 << device_name_ << " to " << current_mode;
+    RCLCPP_DEBUG(rclcpp::get_logger(__PRETTY_FUNCTION__), "%s", ss.str().c_str());
+    ss.str(""); ss.clear();
 
     return true;
 }
@@ -302,8 +326,10 @@ void CanDriveTwitter::commandSetPoint()
         {
             if (cnt-- == 0)
             {
-                LOG_ERROR_S << __PRETTY_FUNCTION__ << ": Drive " << device_name_
+                ss << ": Drive " << device_name_
                             << " not ready for new set point";
+                RCLCPP_ERROR(rclcpp::get_logger(__PRETTY_FUNCTION__), "%s", ss.str().c_str());
+                ss.str(""); ss.clear();
                 break;
             }
 
@@ -324,8 +350,10 @@ void CanDriveTwitter::commandSetPoint()
 
             if (cnt-- == 0)
             {
-                LOG_ERROR_S << __PRETTY_FUNCTION__ << ": New set point " << output_->target_position
+                ss << ": New set point " << output_->target_position
                             << " was not acknowledged by drive " << device_name_;
+                RCLCPP_ERROR(rclcpp::get_logger(__PRETTY_FUNCTION__), "%s", ss.str().c_str());
+                ss.str(""); ss.clear();
                 break;
             }
 
@@ -441,8 +469,10 @@ CanDriveTwitter::DriveState CanDriveTwitter::readDriveState()
             if (!bit6) return ST_FAULT_REACTION_ACTIVE;
     }
 
-    LOG_WARN_S << __PRETTY_FUNCTION__ << ": Drive " << device_name_
+    ss << ": Drive " << device_name_
                << " in unknown state! Lower byte of status word: " << status_lower;
+    RCLCPP_WARN(rclcpp::get_logger(__PRETTY_FUNCTION__), "%s", ss.str().c_str());
+    ss.str(""); ss.clear();
     return ST_UNKNOWN;
 }
 
@@ -481,8 +511,10 @@ bool CanDriveTwitter::requestEmergencyStop()
 
         if (cnt-- == 0)
         {
-            LOG_ERROR_S << __PRETTY_FUNCTION__ << ": Could not emergency stop drive "
+            ss << ": Could not emergency stop drive "
                         << device_name_ << ". Last state was " << state;
+            RCLCPP_ERROR(rclcpp::get_logger(__PRETTY_FUNCTION__), "%s", ss.str().c_str());
+            ss.str(""); ss.clear();
             return false;
         }
     } while (state != ST_QUICK_STOP_ACTIVE);

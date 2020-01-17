@@ -2,7 +2,9 @@
 
 #include "CanDevice.h"
 #include "EthercatInterface.h"
-#include "base-logging/Logging.hpp"
+#include "rclcpp/rclcpp.hpp"
+#include <sstream>
+static std::stringstream ss;
 #include "ethercat.h"
 
 using namespace platform_driver_ethercat;
@@ -29,25 +31,33 @@ bool EthercatInterface::init()
     /* initialise SOEM, bind socket to ifname */
     if (ec_init(interface_address_.c_str()))
     {
-        LOG_INFO_S << __PRETTY_FUNCTION__ << ": Initialization on interface "
+        ss << ": Initialization on interface "
                    << interface_address_.c_str() << " succeeded";
+        RCLCPP_INFO(rclcpp::get_logger(__PRETTY_FUNCTION__), "%s", ss.str().c_str());
+        ss.str(""); ss.clear();
         /* find and auto-config slaves */
         if (ec_config_init(FALSE) > 0)
         {
-            LOG_INFO_S << __PRETTY_FUNCTION__ << ": " << ec_slavecount << " slaves found";
+            ss << ": " << ec_slavecount << " slaves found";
+            RCLCPP_INFO(rclcpp::get_logger(__PRETTY_FUNCTION__), "%s", ss.str().c_str());
+            ss.str(""); ss.clear();
 
             if (num_slaves_ != ec_slavecount)
             {
-                LOG_ERROR_S << __PRETTY_FUNCTION__ << ": Expected number of slaves (" << num_slaves_
+                ss << ": Expected number of slaves (" << num_slaves_
                             << ") differs from number of slaves found (" << ec_slavecount << ")";
+                RCLCPP_ERROR(rclcpp::get_logger(__PRETTY_FUNCTION__), "%s", ss.str().c_str());
+                ss.str(""); ss.clear();
                 return false;
             }
 
             if (devices_.size() > ec_slavecount)
             {
-                LOG_ERROR_S << __PRETTY_FUNCTION__ << ": Number of added devices ("
+                ss << ": Number of added devices ("
                             << devices_.size() << ") is greater than number of slaves found ("
                             << ec_slavecount << ")";
+                RCLCPP_ERROR(rclcpp::get_logger(__PRETTY_FUNCTION__), "%s", ss.str().c_str());
+                ss.str(""); ss.clear();
                 return false;
             }
 
@@ -58,8 +68,10 @@ bool EthercatInterface::init()
 
                 if (slave_id > ec_slavecount)
                 {
-                    LOG_ERROR_S << __PRETTY_FUNCTION__ << ": Slave id " << slave_id
+                    ss << ": Slave id " << slave_id
                                 << " outside range";
+                    RCLCPP_ERROR(rclcpp::get_logger(__PRETTY_FUNCTION__), "%s", ss.str().c_str());
+                    ss.str(""); ss.clear();
                     return false;
                 }
 
@@ -86,14 +98,20 @@ bool EthercatInterface::init()
                 device.second->setOutputPdo(ec_slave[slave_id].outputs);
             }
 
-            LOG_DEBUG_S << __PRETTY_FUNCTION__ << ": Slaves mapped, state to SAFE_OP";
+            ss << ": Slaves mapped, state to SAFE_OP";
+            RCLCPP_DEBUG(rclcpp::get_logger(__PRETTY_FUNCTION__), "%s", ss.str().c_str());
+            ss.str(""); ss.clear();
             /* wait for all slaves to reach SAFE_OP state */
             ec_statecheck(0, EC_STATE_SAFE_OP, EC_TIMEOUTSTATE * 4);
 
             expected_wkc_ = (ec_group[0].outputsWKC * 2) + ec_group[0].inputsWKC;
-            LOG_DEBUG_S << __PRETTY_FUNCTION__ << ": Calculated workcounter " << expected_wkc_;
+            ss << ": Calculated workcounter " << expected_wkc_;
+            RCLCPP_DEBUG(rclcpp::get_logger(__PRETTY_FUNCTION__), "%s", ss.str().c_str());
+            ss.str(""); ss.clear();
 
-            LOG_DEBUG_S << __PRETTY_FUNCTION__ << ": Request operational state for all slaves";
+            ss << ": Request operational state for all slaves";
+            RCLCPP_DEBUG(rclcpp::get_logger(__PRETTY_FUNCTION__), "%s", ss.str().c_str());
+            ss.str(""); ss.clear();
             ec_slave[0].state = EC_STATE_OPERATIONAL;
             /* send one valid process data to make outputs in slaves happy*/
             ec_send_processdata();
@@ -111,7 +129,9 @@ bool EthercatInterface::init()
 
             if (ec_slave[0].state == EC_STATE_OPERATIONAL)
             {
-                LOG_DEBUG_S << __PRETTY_FUNCTION__ << ": Operational state reached for all slaves";
+                ss << ": Operational state reached for all slaves";
+                RCLCPP_DEBUG(rclcpp::get_logger(__PRETTY_FUNCTION__), "%s", ss.str().c_str());
+                ss.str(""); ss.clear();
 
                 /* create thread for pdo cycle */
                 // pthread_create(&_thread_handle, NULL, &pdoCycle, NULL);
@@ -122,7 +142,9 @@ bool EthercatInterface::init()
             }
             else
             {
-                LOG_ERROR_S << __PRETTY_FUNCTION__ << ": Not all slaves reached operational state";
+                ss << ": Not all slaves reached operational state";
+                RCLCPP_ERROR(rclcpp::get_logger(__PRETTY_FUNCTION__), "%s", ss.str().c_str());
+                ss.str(""); ss.clear();
                 is_initialized_ = false;
 
                 ec_readstate();
@@ -131,7 +153,7 @@ bool EthercatInterface::init()
                 {
                     if (ec_slave[i].state != EC_STATE_OPERATIONAL)
                     {
-                        LOG_DEBUG("%s: Slave %d State=0x%2.2x StatusCode=0x%4.4x : %s\n",
+                        RCLCPP_DEBUG(rclcpp::get_logger(__PRETTY_FUNCTION__), "%s: Slave %d State=0x%2.2x StatusCode=0x%4.4x : %s\n",
                                   __PRETTY_FUNCTION__,
                                   i,
                                   ec_slave[i].state,
@@ -146,15 +168,19 @@ bool EthercatInterface::init()
         }
         else
         {
-            LOG_ERROR_S << __PRETTY_FUNCTION__ << ": No slaves found";
+            ss << ": No slaves found";
+            RCLCPP_ERROR(rclcpp::get_logger(__PRETTY_FUNCTION__), "%s", ss.str().c_str());
+            ss.str(""); ss.clear();
             close();
             return false;
         }
     }
     else
     {
-        LOG_ERROR_S << __PRETTY_FUNCTION__ << ": Initialization on interface "
+        ss << ": Initialization on interface "
                     << interface_address_.c_str() << " not succeeded";
+        RCLCPP_ERROR(rclcpp::get_logger(__PRETTY_FUNCTION__), "%s", ss.str().c_str());
+        ss.str(""); ss.clear();
         return false;
     }
 }
@@ -163,7 +189,9 @@ void EthercatInterface::close()
 {
     if (isInit())
     {
-        LOG_INFO_S << __PRETTY_FUNCTION__ << ": Request init state for all slaves";
+        ss << ": Request init state for all slaves";
+        RCLCPP_INFO(rclcpp::get_logger(__PRETTY_FUNCTION__), "%s", ss.str().c_str());
+        ss.str(""); ss.clear();
         ec_slave[0].state = EC_STATE_INIT;
         /* request INIT state for all slaves */
         ec_writestate(0);
@@ -175,7 +203,9 @@ void EthercatInterface::close()
         is_initialized_ = false;
     }
 
-    LOG_INFO_S << __PRETTY_FUNCTION__ << ": Close socket";
+    ss << ": Close socket";
+    RCLCPP_INFO(rclcpp::get_logger(__PRETTY_FUNCTION__), "%s", ss.str().c_str());
+    ss.str(""); ss.clear();
     ec_close();
 }
 
@@ -185,8 +215,10 @@ bool EthercatInterface::addDevice(std::shared_ptr<CanDevice> device)
 {
     if (isInit())
     {
-        LOG_WARN_S << __PRETTY_FUNCTION__
+        ss
                    << ": EtherCAT interface already initialized, device cannot be added afterwards";
+        RCLCPP_WARN(rclcpp::get_logger(__PRETTY_FUNCTION__), "%s", ss.str().c_str());
+        ss.str(""); ss.clear();
         return false;
     }
 
@@ -200,7 +232,7 @@ bool EthercatInterface::sdoRead(uint16_t slave, uint16_t idx, uint8_t sub, int* 
     int fieldsize = sizeof(data);
 
     int wkc = ec_SDOread(slave, idx, sub, FALSE, &fieldsize, data, EC_TIMEOUTTXM);
-    LOG_DEBUG("%s: Read from slave %d at 0x%04x:%d => wkc: %d; data: 0x%.*x (%d)",
+    RCLCPP_DEBUG(rclcpp::get_logger(__PRETTY_FUNCTION__), "%s: Read from slave %d at 0x%04x:%d => wkc: %d; data: 0x%.*x (%d)",
               __PRETTY_FUNCTION__,
               slave,
               idx,
@@ -219,7 +251,7 @@ bool EthercatInterface::sdoRead(uint16_t slave, uint16_t idx, uint8_t sub, int* 
 bool EthercatInterface::sdoWrite(uint16_t slave, uint16_t idx, uint8_t sub, int fieldsize, int data)
 {
     int wkc = ec_SDOwrite(slave, idx, sub, FALSE, fieldsize, &data, EC_TIMEOUTRXM);
-    LOG_DEBUG("%s: Write to slave %d at 0x%04x:%d => wkc: %d; data: 0x%.*x (%d)",
+    RCLCPP_DEBUG(rclcpp::get_logger(__PRETTY_FUNCTION__), "%s: Write to slave %d at 0x%04x:%d => wkc: %d; data: 0x%.*x (%d)",
               __PRETTY_FUNCTION__,
               slave,
               idx,
@@ -267,15 +299,19 @@ void EthercatInterface::pdoCycle()
                     ec_group[currentgroup].docheckstate = TRUE;
                     if (ec_slave[slave].state == (EC_STATE_SAFE_OP + EC_STATE_ERROR))
                     {
-                        LOG_ERROR_S << __PRETTY_FUNCTION__ << ": Slave " << slave
+                        ss << ": Slave " << slave
                                     << " is in SAFE_OP + ERROR, attempting ack";
+                        RCLCPP_ERROR(rclcpp::get_logger(__PRETTY_FUNCTION__), "%s", ss.str().c_str());
+                        ss.str(""); ss.clear();
                         ec_slave[slave].state = (EC_STATE_SAFE_OP + EC_STATE_ACK);
                         ec_writestate(slave);
                     }
                     else if (ec_slave[slave].state == EC_STATE_SAFE_OP)
                     {
-                        LOG_WARN_S << __PRETTY_FUNCTION__ << ": Slave " << slave
+                        ss << ": Slave " << slave
                                    << " is in SAFE_OP, change to OPERATIONAL";
+                        RCLCPP_WARN(rclcpp::get_logger(__PRETTY_FUNCTION__), "%s", ss.str().c_str());
+                        ss.str(""); ss.clear();
                         ec_slave[slave].state = EC_STATE_OPERATIONAL;
                         ec_writestate(slave);
                     }
@@ -286,8 +322,10 @@ void EthercatInterface::pdoCycle()
                         if (ec_reconfig_slave(slave, EC_TIMEOUTMON))
                         {
                             ec_slave[slave].islost = FALSE;
-                            LOG_DEBUG_S << __PRETTY_FUNCTION__ << ": Slave " << slave
+                            ss << ": Slave " << slave
                                         << " reconfigured";
+                            RCLCPP_DEBUG(rclcpp::get_logger(__PRETTY_FUNCTION__), "%s", ss.str().c_str());
+                            ss.str(""); ss.clear();
                         }
                     }
                     else if (!ec_slave[slave].islost)
@@ -297,7 +335,9 @@ void EthercatInterface::pdoCycle()
                         if (ec_slave[slave].state == EC_STATE_NONE)
                         {
                             ec_slave[slave].islost = TRUE;
-                            LOG_ERROR_S << __PRETTY_FUNCTION__ << ": Slave " << slave << " lost";
+                            ss << ": Slave " << slave << " lost";
+                            RCLCPP_ERROR(rclcpp::get_logger(__PRETTY_FUNCTION__), "%s", ss.str().c_str());
+                            ss.str(""); ss.clear();
                         }
                     }
                 }
@@ -308,19 +348,25 @@ void EthercatInterface::pdoCycle()
                         if (ec_recover_slave(slave, EC_TIMEOUTMON))
                         {
                             ec_slave[slave].islost = FALSE;
-                            LOG_DEBUG_S << __PRETTY_FUNCTION__ << ": Slave " << slave
+                            ss << ": Slave " << slave
                                         << " recovered";
+                            RCLCPP_DEBUG(rclcpp::get_logger(__PRETTY_FUNCTION__), "%s", ss.str().c_str());
+                            ss.str(""); ss.clear();
                         }
                     }
                     else
                     {
                         ec_slave[slave].islost = FALSE;
-                        LOG_DEBUG_S << __PRETTY_FUNCTION__ << ": Slave " << slave << " found";
+                        ss << ": Slave " << slave << " found";
+                        RCLCPP_DEBUG(rclcpp::get_logger(__PRETTY_FUNCTION__), "%s", ss.str().c_str());
+                        ss.str(""); ss.clear();
                     }
                 }
             }
             if (!ec_group[currentgroup].docheckstate)
-                LOG_INFO_S << __PRETTY_FUNCTION__ << ": All slaves resumed OPERATIONAL";
+                ss << ": All slaves resumed OPERATIONAL";
+                RCLCPP_INFO(rclcpp::get_logger(__PRETTY_FUNCTION__), "%s", ss.str().c_str());
+                ss.str(""); ss.clear();
         }
 
         //osal_usleep(1000);  // roughly 1000 Hz
