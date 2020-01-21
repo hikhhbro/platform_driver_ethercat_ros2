@@ -15,6 +15,10 @@ find_package(ament_cmake REQUIRED)
 find_package(Eigen3 REQUIRED)
 find_package(PkgConfig REQUIRED)
 find_package(rclcpp REQUIRED)
+find_package(yaml-cpp REQUIRED)
+find_package(geometry_msgs REQUIRED)
+find_package(rover_msgs REQUIRED)
+find_package(sensor_msgs REQUIRED)
 
 pkg_check_modules(SOEM REQUIRED IMPORTED_TARGET soem)
 
@@ -22,8 +26,8 @@ file(GLOB MY_SOURCES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} src/*.cpp)
 
 add_executable(platform_driver_ethercat ${MY_SOURCES})
 target_include_directories(platform_driver_ethercat PRIVATE src)
-target_link_libraries(platform_driver_ethercat PkgConfig::SOEM Eigen3::Eigen)
-ament_target_dependencies(platform_driver_ethercat rclcpp)
+target_link_libraries(platform_driver_ethercat PkgConfig::SOEM Eigen3::Eigen yaml-cpp)
+ament_target_dependencies(platform_driver_ethercat rclcpp geometry_msgs rover_msgs sensor_msgs)
 
 install(TARGETS
   platform_driver_ethercat

@@ -1,0 +1,188 @@
+## ethercat configuration
+
+# ethercat network interface
+network_interface: enp1s0
+# number of slaves in the platform
+num_slaves: 29
+
+## slave configuration
+
+drive_params:
+  # motor parameters of the wheel drives
+  - &drive_elmo
+    min_position_deg: 0.0
+    max_position_deg: 0.0
+    max_motor_speed_rpm: 8000  # 1.9106 rad/sec
+    max_motor_current_amp: 1.94
+    motor_rated_current_amp: 0.657
+    motor_rated_torque_nm: 0.011
+    gear_ratio: 438.4615
+    encoder_increments: 512
+    encoder_on_output: false
+    profile_velocity_rad_sec: 1.0
+    profile_acceleration_rad_sec_sec: 10.0
+
+  # motor parameters of the steer drives
+  - &steer_elmo
+    min_position_deg: -100.0   # -1.7453 rad
+    max_position_deg: 100.0    # 1.7453 rad
+    max_motor_speed_rpm: 8000  # 0.3821 rad/sec
+    max_motor_current_amp: 1.94
+    motor_rated_current_amp: 0.657
+    motor_rated_torque_nm: 0.011
+    gear_ratio: 2192.3077
+    encoder_increments: 4096
+    encoder_on_output: true
+    profile_velocity_rad_sec: 0.3
+    profile_acceleration_rad_sec_sec: 3.0
+
+  # motor parameters of the walk/deployment drives
+  - &walk_elmo
+    min_position_deg: -120.0   # -2.0944 rad
+    max_position_deg: 120.0    # 2.0944 rad
+    max_motor_speed_rpm: 8000  # 0.3821 rad/sec
+    max_motor_current_amp: 1.94
+    motor_rated_current_amp: 0.657
+    motor_rated_torque_nm: 0.011
+    gear_ratio: 2192.3077
+    encoder_increments: 4096
+    encoder_on_output: true
+    profile_velocity_rad_sec: 0.2
+    profile_acceleration_rad_sec_sec: 2.0
+
+  # motor parameters of the pan drive
+  - &pan_elmo
+    min_position_deg: -140.0   # -2.4435 rad
+    max_position_deg: 140.0    # 2.4435 rad
+    max_motor_speed_rpm: 8000  # 0.5236 rad/sec
+    max_motor_current_amp: 0.106
+    motor_rated_current_amp: 0.081
+    motor_rated_torque_nm: 0.000731
+    gear_ratio: 1600
+    encoder_increments: 384 # used instead of 512 to correct for wrong pin connection
+    encoder_on_output: false
+    profile_velocity_rad_sec: 0.1
+    profile_acceleration_rad_sec_sec: 1.0
+
+  # motor parameters of the tilt drive
+  - &tilt_elmo
+    min_position_deg: -85.0    # -1.4835 rad
+    max_position_deg: 85.0     # 1.4835 rad
+    max_motor_speed_rpm: 8000  # 0.5236 rad/sec
+    max_motor_current_amp: 0.106
+    motor_rated_current_amp: 0.081
+    motor_rated_torque_nm: 0.000731
+    gear_ratio: 1600
+    encoder_increments: 384 # used instead of 512 to correct for wrong pin connection
+    encoder_on_output: false
+    profile_velocity_rad_sec: 0.1
+    profile_acceleration_rad_sec_sec: 1.0
+
+# elmo slave mapping, names and parameters
+drive_mapping:
+    - {slave_id: 1,  name: ELMO_DRIVE_BR, params: *drive_elmo}
+    - {slave_id: 2,  name: ELMO_STEER_BR, params: *steer_elmo}
+    - {slave_id: 3,  name: ELMO_WALK_BR,  params: *walk_elmo}
+    - {slave_id: 4,  name: ELMO_DRIVE_BL, params: *drive_elmo}
+    - {slave_id: 5,  name: ELMO_STEER_BL, params: *steer_elmo}
+    - {slave_id: 6,  name: ELMO_WALK_BL,  params: *walk_elmo}
+    - {slave_id: 7,  name: ELMO_DRIVE_FL, params: *drive_elmo}
+    - {slave_id: 8,  name: ELMO_STEER_FL, params: *steer_elmo}
+    - {slave_id: 9,  name: ELMO_WALK_FL,  params: *walk_elmo}
+    - {slave_id: 10, name: ELMO_DRIVE_CL, params: *drive_elmo}
+    - {slave_id: 11, name: ELMO_STEER_CL, params: *steer_elmo}
+    - {slave_id: 12, name: ELMO_WALK_CL,  params: *walk_elmo}
+    - {slave_id: 13, name: ELMO_PAN,      params: *pan_elmo}
+    - {slave_id: 14, name: ELMO_TILT,     params: *tilt_elmo}
+    - {slave_id: 15, name: ELMO_DRIVE_CR, params: *drive_elmo}
+    - {slave_id: 16, name: ELMO_STEER_CR, params: *steer_elmo}
+    - {slave_id: 17, name: ELMO_WALK_CR,  params: *walk_elmo}
+    - {slave_id: 18, name: ELMO_DRIVE_FR, params: *drive_elmo}
+    - {slave_id: 19, name: ELMO_STEER_FR, params: *steer_elmo}
+    - {slave_id: 20, name: ELMO_WALK_FR,  params: *walk_elmo}
+
+# force torque sensor slave mapping and names
+fts_mapping:
+    - {slave_id: 22, name: FTS_CL}
+    - {slave_id: 23, name: FTS_FL}
+    - {slave_id: 25, name: FTS_BL}
+    - {slave_id: 26, name: FTS_BR}
+    - {slave_id: 28, name: FTS_CR}
+    - {slave_id: 29, name: FTS_FR}
+
+## joint configuration
+
+joint_params:
+  # parameters of the wheel/drive joints
+  - &drive_joint
+    flip_sign: false
+    min_position_command_rad: 0.0
+    max_position_command_rad: 0.0
+    max_velocity_command_rad_sec: 1.91
+    max_torque_command_nm: 15.3
+    temp_offset_deg_c: 0.0
+
+  # parameters of the steer joints
+  - &steer_joint
+    flip_sign: true
+    min_position_command_rad: -1.74
+    max_position_command_rad: 1.74
+    max_velocity_command_rad_sec: 0.38
+    max_torque_command_nm: 76.9
+    temp_offset_deg_c: 0.0
+
+  # parameters of the walk/deployment joints
+  - &walk_joint
+    flip_sign: false
+    min_position_command_rad: -2.09
+    max_position_command_rad: 2.09
+    max_velocity_command_rad_sec: 0.38
+    max_torque_command_nm: 76.9
+    temp_offset_deg_c: 0.0
+
+  # parameters of the pan joints
+  - &pan_joint
+    flip_sign: true
+    min_position_command_rad: -2.35
+    max_position_command_rad: 2.35
+    max_velocity_command_rad_sec: 0.52
+    max_torque_command_nm: 1.16
+    temp_offset_deg_c: 0.0
+
+  # parameters of the tilt joints
+  - &tilt_joint
+    flip_sign: false
+    min_position_command_rad: -1.39
+    max_position_command_rad: 1.39
+    max_velocity_command_rad_sec: 0.52
+    max_torque_command_nm: 1.16
+    temp_offset_deg_c: 0.0
+
+# active joint names, mapping to drives and parameters
+active_joint_mapping:
+    - {name: WHEEL_DRIVE_FL, drive: ELMO_DRIVE_FL, params: {<<: *drive_joint, temp_offset_deg_c: -15.6}, enabled: true}
+    - {name: WHEEL_DRIVE_FR, drive: ELMO_DRIVE_FR, params: {<<: *drive_joint, temp_offset_deg_c: -12.8}, enabled: true}
+    - {name: WHEEL_DRIVE_CL, drive: ELMO_DRIVE_CL, params: {<<: *drive_joint, temp_offset_deg_c: -9.8},  enabled: true}
+    - {name: WHEEL_DRIVE_CR, drive: ELMO_DRIVE_CR, params: {<<: *drive_joint, temp_offset_deg_c: -11.9}, enabled: true}
+    - {name: WHEEL_DRIVE_BL, drive: ELMO_DRIVE_BL, params: {<<: *drive_joint, temp_offset_deg_c: -10.6}, enabled: true}
+    - {name: WHEEL_DRIVE_BR, drive: ELMO_DRIVE_BR, params: {<<: *drive_joint, temp_offset_deg_c: -11.7}, enabled: true}
+    - {name: WHEEL_STEER_FL, drive: ELMO_STEER_FL, params: {<<: *steer_joint, temp_offset_deg_c: -13.0}, enabled: true}
+    - {name: WHEEL_STEER_FR, drive: ELMO_STEER_FR, params: {<<: *steer_joint, temp_offset_deg_c: -9.5},  enabled: true}
+    - {name: WHEEL_STEER_CL, drive: ELMO_STEER_CL, params: {<<: *steer_joint, temp_offset_deg_c: -12.7}, enabled: true}
+    - {name: WHEEL_STEER_CR, drive: ELMO_STEER_CR, params: {<<: *steer_joint, temp_offset_deg_c: -13.7}, enabled: true}
+    - {name: WHEEL_STEER_BL, drive: ELMO_STEER_BL, params: {<<: *steer_joint, temp_offset_deg_c: -5.8},  enabled: true}
+    - {name: WHEEL_STEER_BR, drive: ELMO_STEER_BR, params: {<<: *steer_joint, temp_offset_deg_c: -8.9},  enabled: true}
+    - {name: WHEEL_WALK_FL,  drive: ELMO_WALK_FL,  params: {<<: *walk_joint,  temp_offset_deg_c: -9.5},  enabled: true}
+    - {name: WHEEL_WALK_FR,  drive: ELMO_WALK_FR,  params: {<<: *walk_joint,  temp_offset_deg_c: -8.9},  enabled: true}
+    - {name: WHEEL_WALK_CL,  drive: ELMO_WALK_CL,  params: {<<: *walk_joint,  temp_offset_deg_c: -9.4},  enabled: true}
+    - {name: WHEEL_WALK_CR,  drive: ELMO_WALK_CR,  params: {<<: *walk_joint,  temp_offset_deg_c: -12.0}, enabled: true}
+    - {name: WHEEL_WALK_BL,  drive: ELMO_WALK_BL,  params: {<<: *walk_joint,  temp_offset_deg_c: -5.3},  enabled: true}
+    - {name: WHEEL_WALK_BR,  drive: ELMO_WALK_BR,  params: {<<: *walk_joint,  temp_offset_deg_c: -7.4},  enabled: true}
+    - {name: MAST_PAN,       drive: ELMO_PAN,      params: *pan_joint,                                   enabled: true}
+    - {name: MAST_TILT,      drive: ELMO_TILT,     params: *tilt_joint,                                  enabled: true}
+
+# passive joint names and mapping to drives
+passive_joint_mapping:
+    - {name: LEFT_PASSIVE,  drive: ELMO_DRIVE_FL, enabled: true}
+    - {name: RIGHT_PASSIVE, drive: ELMO_DRIVE_FR, enabled: true}
+    - {name: BACK_PASSIVE,  drive: ELMO_DRIVE_BL, enabled: true}

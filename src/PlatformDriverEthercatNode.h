@@ -4,12 +4,13 @@
 #include <memory>
 
 #include "rclcpp/rclcpp.hpp"
-
-#include <base/samples/Joints.hpp>
-#include <base/samples/Wrenches.hpp>
+#include "geometry_msgs/msg/wrench_stamped.hpp"
+#include "rover_msgs/msg/joint_command_array.hpp"
+#include "sensor_msgs/msg/joint_state.hpp"
+#include "sensor_msgs/msg/temperature.hpp"
 
 #include "PlatformDriverEthercatTypes.h"
-#include "platform_driver_ethercat_types.h"
+#include "PlatformDriverEthercatNodeTypes.h"
 
 using namespace std::chrono_literals;
 
@@ -30,19 +31,20 @@ private:
     bool updateHook();
     void timer_callback();
     bool validateConfig();
-    void evalJointCommands();
+    void evalJointCommands(const rover_msgs::msg::JointCommandArray::SharedPtr joint_commands);
     void updateJointReadings();
     void updateFtsReadings();
     void updateTempReadings();
 
     rclcpp::TimerBase::SharedPtr timer_;
-    rclcpp::Publisher<base::samples::Joints>::SharedPtr joint_readings_publisher_;
-    rclcpp::Publisher<base::samples::Wrenches>::SharedPtr fts_readings_publisher_;
-    rclcpp::Publisher<Temperatures>::SharedPtr temp_readings_publisher_;
+    rclcpp::Publisher<sensor_msgs::msg::JointState>::SharedPtr joint_readings_publisher_;
+    rclcpp::Publisher<std::vector<geometry_msgs::msg::WrenchStamped>>::SharedPtr fts_readings_publisher_;
+    rclcpp::Publisher<std::vector<sensor_msgs::msg::Temperature>>::SharedPtr temp_readings_publisher_;
+    rclcpp::Subscription<rover_msgs::msg::JointCommandArray>::SharedPtr joint_commands_subscriber_;
 
-    base::samples::Joints joint_readings_;
-    base::samples::Wrenches fts_readings_;
-    Temperatures temp_readings_;
+    sensor_msgs::msg::JointState joint_readings_;
+    std::vector<geometry_msgs::msg::WrenchStamped> fts_readings_;
+    std::vector<sensor_msgs::msg::Temperature> temp_readings_;
 
     std::string network_interface_;
     unsigned int num_slaves_;

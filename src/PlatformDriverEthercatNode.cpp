@@ -1,13 +1,12 @@
 #include <PlatformDriverEthercat.h>
 #include <sys/stat.h>
-#include <rclcpp/rclcpp.hpp>
 #include <sstream>
-static std::stringstream ss;
-#include <base/Time.hpp>
-#include <base/commands/Joints.hpp>
 #include <set>
 
-#include "PlatformDriverEthercatNode.hpp"
+#include "PlatformDriverEthercatNode.h"
+#include "yaml-cpp/yaml.h"
+
+static std::stringstream ss;
 
 using namespace platform_driver_ethercat;
 
@@ -15,15 +14,17 @@ using namespace platform_driver_ethercat;
 PlatformDriverEthercatNode::PlatformDriverEthercatNode()
   : Node("platform_driver_ethercat")
 {
-    joint_readings_publisher_ = this->create_publisher<base::samples::Joints>("joint_readings");
-    fts_readings_publisher_ = this->create_publisher<base::samples::Wrenches>("fts_readings");
-    temp_readings_publisher_ = this->create_publisher<Temperatures>("temp_readings");
+    joint_readings_publisher_ = this->create_publisher<sensor_msgs::msg::JointState>("joint_readings", 10);
+    fts_readings_publisher_ = this->create_publisher<std::vector<geometry_msgs::msg::WrenchStamped>>("fts_readings", 10);
+    temp_readings_publisher_ = this->create_publisher<std::vector<sensor_msgs::msg::Temperature>>("temp_readings", 10);
 
-    configureHook()
+    configureHook();
     startHook();
 
     timer_ = this->create_wall_timer(
       10ms, std::bind(&PlatformDriverEthercatNode::updateHook, this));
+
+    joint_commands_subscriber_ = this->create_subscription<rover_msgs::msg::JointCommandArray>("joint_commands", 10, std::bind(&PlatformDriverEthercatNode::evalJointCommands, this, std::placeholders::_1));
 }
 
 PlatformDriverEthercatNode::~PlatformDriverEthercatNode()
@@ -33,13 +34,23 @@ PlatformDriverEthercatNode::~PlatformDriverEthercatNode()
 
 bool PlatformDriverEthercatNode::configureHook()
 {
+    YAML::Node config = YAML::LoadFile("marta.yaml");
+
+    if (!config["network_interface"]
+            || !config["num_slaves"]
+            || !config["drive_mapping"]
+            || !config["fts_mapping"]
+            || !config["active_joint_mapping"]
+            || !config["passive_joint_mapping"])
+        return false;
+
     // Read configuration
-    network_interface_ = _network_interface.get();
-    num_slaves_ = _num_slaves.get();
-    drive_mapping_ = _drive_mapping.get();
-    fts_mapping_ = _fts_mapping.get();
-    active_joint_mapping_ = _active_joint_mapping.get();
-    passive_joint_mapping_ = _passive_joint_mapping.get();
+    network_interface_ = config["network_interface"].as<std::string>();
+    num_slaves_ = config["num_slaves"].as<int>();
+    drive_mapping_ = config["drive_mapping"].as<DriveSlaveMapping>();
+    fts_mapping_ = config["fts_mapping"].as<FtsSlaveMapping>();
+    active_joint_mapping_ = config["active_joint_mapping"].as<ActiveJointMapping>();
+    passive_joint_mapping_ = config["passive_joint_mapping"].as<PassiveJointMapping>();
 
     if (!validateConfig())
     {
@@ -110,8 +121,6 @@ void Task::updateHook()
     updateJointReadings();
     updateFtsReadings();
     updateTempReadings();
-
-    evalJointCommands();
 
     joint_readings_.time = base::Time::now();
     _joints_readings.write(joint_readings_);
@@ -258,7 +267,7 @@ bool Task::validateConfig()
     return true;
 }
 
-void Task::evalJointCommands()
+void Task::evalJointCommands(const rover_msgs::msg::JointCommandArray::SharedPtr joint_commands)
 {
     base::commands::Joints joint_commands;
 
