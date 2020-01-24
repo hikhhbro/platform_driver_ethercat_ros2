@@ -12,17 +12,17 @@ using namespace platform_driver_ethercat;
 
 
 PlatformDriverEthercatNode::PlatformDriverEthercatNode()
-  : Node("platform_driver_ethercat")
+    : Node("platform_driver_ethercat")
 {
     joint_readings_publisher_ = this->create_publisher<sensor_msgs::msg::JointState>("joint_readings", 10);
-    fts_readings_publisher_ = this->create_publisher<std::vector<geometry_msgs::msg::WrenchStamped>>("fts_readings", 10);
-    temp_readings_publisher_ = this->create_publisher<std::vector<sensor_msgs::msg::Temperature>>("temp_readings", 10);
+    fts_readings_publisher_ = this->create_publisher<rover_msgs::msg::WrenchStampedArray>("fts_readings", 10);
+    temp_readings_publisher_ = this->create_publisher<rover_msgs::msg::TemperatureArray>("temp_readings", 10);
 
     configureHook();
     startHook();
 
     timer_ = this->create_wall_timer(
-      10ms, std::bind(&PlatformDriverEthercatNode::updateHook, this));
+            10ms, std::bind(&PlatformDriverEthercatNode::updateHook, this));
 
     joint_commands_subscriber_ = this->create_subscription<rover_msgs::msg::JointCommandArray>("joint_commands", 10, std::bind(&PlatformDriverEthercatNode::evalJointCommands, this, std::placeholders::_1));
 }
@@ -60,9 +60,12 @@ bool PlatformDriverEthercatNode::configureHook()
         return false;
     }
 
-    fts_readings_.resize(fts_mapping_.size());
-    joint_readings_.resize(active_joint_mapping_.size() + passive_joint_mapping_.size());
-    temp_readings_.resize(active_joint_mapping_.size());
+    fts_readings_.wrenches.resize(fts_mapping_.size());
+    joint_readings_.name.resize(active_joint_mapping_.size() + passive_joint_mapping_.size());
+    joint_readings_.position.resize(active_joint_mapping_.size() + passive_joint_mapping_.size());
+    joint_readings_.velocity.resize(active_joint_mapping_.size() + passive_joint_mapping_.size());
+    joint_readings_.effort.resize(active_joint_mapping_.size() + passive_joint_mapping_.size());
+    temp_readings_.temperatures.resize(active_joint_mapping_.size());
 
     platform_driver_.reset(new PlatformDriverEthercat(network_interface_, num_slaves_));
 
@@ -76,7 +79,7 @@ bool PlatformDriverEthercatNode::configureHook()
     size_t i = 0;
     for (const auto& fts : fts_mapping_)
     {
-        fts_readings_.names[i] = fts.name;
+        fts_readings_.wrenches[i].header.frame_id = fts.name;
         platform_driver_->addAtiFts(fts.slave_id, fts.name);
         ++i;
     }
@@ -86,8 +89,8 @@ bool PlatformDriverEthercatNode::configureHook()
     i = 0;
     for (const auto& joint : active_joint_mapping_)
     {
-        joint_readings_.names[i] = joint.name;
-        temp_readings_.names[i] = joint.name;
+        joint_readings_.name[i] = joint.name;
+        temp_readings_.temperatures[i].header.frame_id = joint.name;
         platform_driver_->addActiveJoint(joint.name, joint.drive, joint.params, joint.enabled);
         ++i;
     }
@@ -99,7 +102,7 @@ bool PlatformDriverEthercatNode::configureHook()
 
     for (const auto& joint : passive_joint_mapping_)
     {
-        joint_readings_.names[i] = joint.name;
+        joint_readings_.name[i] = joint.name;
         platform_driver_->addPassiveJoint(joint.name, joint.drive, joint.enabled);
         ++i;
     }
@@ -117,22 +120,20 @@ bool PlatformDriverEthercatNode::startHook()
     return false;
 }
 
-void Task::updateHook()
+void PlatformDriverEthercatNode::updateHook()
 {
-    TaskBase::updateHook();
-
     updateJointReadings();
     updateFtsReadings();
     updateTempReadings();
 
-    joint_readings_.time = base::Time::now();
-    _joints_readings.write(joint_readings_);
+    //joint_readings_.time = base::Time::now();
+    joint_readings_publisher_->publish(joint_readings_);
 
-    fts_readings_.time = base::Time::now();
-    _fts_readings.write(fts_readings_);
+    //fts_readings_.time = base::Time::now();
+    fts_readings_publisher_->publish(fts_readings_);
 
-    temp_readings_.time = base::Time::now();
-    _temp_readings.write(temp_readings_);
+    //temp_readings_.time = base::Time::now();
+    temp_readings_publisher_->publish(temp_readings_);
 
     // LOG_DEBUG_S << __PRETTY_FUNCTION__ << ": " << base::Time::now();
     //auto message = std_msgs::msg::String();
@@ -140,14 +141,14 @@ void Task::updateHook()
     //publisher_->publish(message);
 }
 
-bool Task::validateConfig()
+bool PlatformDriverEthercatNode::validateConfig()
 {
     // Check if interface exists
     struct stat buffer;
     if (stat(("/sys/class/net/" + network_interface_).c_str(), &buffer) != 0)
     {
         ss << ": Interface " << network_interface_
-                    << " does not exist";
+            << " does not exist";
         RCLCPP_ERROR(rclcpp::get_logger(__PRETTY_FUNCTION__), "%s", ss.str().c_str());
         ss.str(""); ss.clear();
         return false;
@@ -218,7 +219,7 @@ bool Task::validateConfig()
     std::set<std::string> joint_set, active_set, passive_set;
 
     auto validateJoint = [&drive_set, &joint_set](JointConfig config,
-                                                  std::set<std::string>& current_set) {
+            std::set<std::string>& current_set) {
         const auto& name = config.name;
         const auto& drive = config.drive;
 
@@ -236,7 +237,7 @@ bool Task::validateConfig()
         if (drive_set.find(drive) == drive_set.end())
         {
             ss << ": Drive " << drive << " for joint " << name
-                        << " does not exist";
+                << " does not exist";
             RCLCPP_ERROR(rclcpp::get_logger(__PRETTY_FUNCTION__), "%s", ss.str().c_str());
             ss.str(""); ss.clear();
             return false;
@@ -246,7 +247,7 @@ bool Task::validateConfig()
         if (current_set.find(drive) != current_set.end())
         {
             ss << ": Drive " << drive
-                        << " already in use with another joint of the same type";
+                << " already in use with another joint of the same type";
             RCLCPP_ERROR(rclcpp::get_logger(__PRETTY_FUNCTION__), "%s", ss.str().c_str());
             ss.str(""); ss.clear();
             return false;
@@ -270,29 +271,24 @@ bool Task::validateConfig()
     return true;
 }
 
-void Task::evalJointCommands(const rover_msgs::msg::JointCommandArray::SharedPtr joint_commands)
+void PlatformDriverEthercatNode::evalJointCommands(const rover_msgs::msg::JointCommandArray::SharedPtr joint_commands)
 {
-    base::commands::Joints joint_commands;
-
-    if (_joints_commands.readNewest(joint_commands, false) == RTT::NewData)
+    for (size_t i = 0; i < joint_commands->joint_command_array.size(); ++i)
     {
-        for (size_t i = 0; i < joint_commands.size(); ++i)
-        {
-            base::JointState& joint(joint_commands[i]);
+        rover_msgs::msg::JointCommand& joint(joint_commands->joint_command_array[i]);
 
-            if (joint.isPosition())
-            {
-                platform_driver_->commandJointPositionRad(joint_commands.names[i], joint.position);
-            }
-            else if (joint.isSpeed())
-            {
-                platform_driver_->commandJointVelocityRadSec(joint_commands.names[i], joint.speed);
-            }
+        if (joint.mode == "position")
+        {
+            platform_driver_->commandJointPositionRad(joint.name, joint.value);
+        }
+        else if (joint.mode == "velocity")
+        {
+            platform_driver_->commandJointVelocityRadSec(joint.name, joint.value);
         }
     }
 }
 
-void Task::updateJointReadings()
+void PlatformDriverEthercatNode::updateJointReadings()
 {
     size_t i = 0;
 
@@ -304,10 +300,9 @@ void Task::updateJointReadings()
         platform_driver_->readJointVelocityRadSec(joint.name, velocity);
         platform_driver_->readJointTorqueNm(joint.name, torque);
 
-        base::JointState& joint_state(joint_readings_[i]);
-        joint_state.position = position;
-        joint_state.speed = velocity;
-        joint_state.effort = torque;
+        joint_readings_.position[i] = position;
+        joint_readings_.velocity[i] = velocity;
+        joint_readings_.effort[i] = torque;
 
         ++i;
     }
@@ -320,16 +315,15 @@ void Task::updateJointReadings()
         platform_driver_->readJointVelocityRadSec(joint.name, velocity);
         platform_driver_->readJointTorqueNm(joint.name, torque);
 
-        base::JointState& joint_state(joint_readings_[i]);
-        joint_state.position = position;
-        joint_state.speed = velocity;
-        joint_state.effort = torque;
+        joint_readings_.position[i] = position;
+        joint_readings_.velocity[i] = velocity;
+        joint_readings_.effort[i] = torque;
 
         ++i;
     }
 }
 
-void Task::updateFtsReadings()
+void PlatformDriverEthercatNode::updateFtsReadings()
 {
     size_t i = 0;
     for (const auto& fts_params : fts_mapping_)
@@ -340,15 +334,21 @@ void Task::updateFtsReadings()
         platform_driver_->readFtsForceN(fts_params.name, fx, fy, fz);
         platform_driver_->readFtsTorqueNm(fts_params.name, tx, ty, tz);
 
-        base::Wrench& wrench(fts_readings_[i]);
-        wrench.force = base::Vector3d(fx, fy, fz);
-        wrench.torque = base::Vector3d(tx, ty, tz);
+        geometry_msgs::msg::Wrench& wrench(fts_readings_.wrenches[i].wrench);
+
+        wrench.force.x = fx;
+        wrench.force.y = fy;
+        wrench.force.z = fz;
+
+        wrench.torque.x = tx;
+        wrench.torque.y = ty;
+        wrench.torque.z = tz;
 
         ++i;
     }
 }
 
-void Task::updateTempReadings()
+void PlatformDriverEthercatNode::updateTempReadings()
 {
     size_t i = 0;
     for (const auto& joint : active_joint_mapping_)
@@ -361,11 +361,11 @@ void Task::updateTempReadings()
 
         if (first_window)
         {
-            temp_readings_[i] = temp_sums[i] / (1.0 * (temp_index + 1));
+            temp_readings_.temperatures[i].temperature = temp_sums[i] / (1.0 * (temp_index + 1));
         }
         else
         {
-            temp_readings_[i] = temp_sums[i] / (1.0 * window_size);
+            temp_readings_.temperatures[i].temperature = temp_sums[i] / (1.0 * window_size);
         }
 
         ++i;
