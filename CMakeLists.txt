@@ -33,5 +33,6 @@ install(TARGETS
   platform_driver_ethercat
   DESTINATION lib/${PROJECT_NAME})
 
-ament_package()
+install(CODE "execute_process(COMMAND sudo /sbin/setcap CAP_NET_RAW=ep \"${CMAKE_INSTALL_PREFIX}/lib/${PROJECT_NAME}/platform_driver_ethercat\")")
 
+ament_package()
