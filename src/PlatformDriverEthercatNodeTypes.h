@@ -53,13 +53,6 @@ namespace YAML
     template<>
         struct convert<DriveParams>
         {
-            static Node encode(const DriveParams& params)
-            {
-                Node node;
-                // not implemented
-                return node;
-            }
-
             static bool decode(const Node& node, DriveParams& params)
             {
                 if (!node.IsMap())
@@ -70,7 +63,7 @@ namespace YAML
                         || !node["max_motor_speed_rpm"]
                         || !node["max_motor_current_amp"]
                         || !node["motor_rated_current_amp"]
-                        || !node["motor_rated_torque_amp"]
+                        || !node["motor_rated_torque_nm"]
                         || !node["gear_ratio"]
                         || !node["encoder_increments"]
                         || !node["encoder_on_output"]
@@ -83,7 +76,7 @@ namespace YAML
                 params.max_motor_speed_rpm = node["max_motor_speed_rpm"].as<int>();
                 params.max_motor_current_amp = node["max_motor_current_amp"].as<double>();
                 params.motor_rated_current_amp = node["motor_rated_current_amp"].as<double>();
-                params.motor_rated_torque_nm = node["motor_rated_torque_amp"].as<double>();
+                params.motor_rated_torque_nm = node["motor_rated_torque_nm"].as<double>();
                 params.gear_ratio = node["gear_ratio"].as<double>();
                 params.encoder_increments = node["encoder_increments"].as<int>();
                 params.encoder_on_output = node["encoder_on_output"].as<bool>();
@@ -97,13 +90,6 @@ namespace YAML
     template<>
         struct convert<DriveSlaveMapping>
         {
-            static Node encode(const DriveSlaveMapping& mapping)
-            {
-                Node node;
-                // not implemented
-                return node;
-            }
-
             static bool decode(const Node& node, DriveSlaveMapping& mapping)
             {
                 if (!node.IsSequence())
@@ -116,8 +102,7 @@ namespace YAML
 
                     if (!(*it)["slave_id"]
                             || !(*it)["name"]
-                            || !(*it)["params"]
-                            || !(*it)["enabled"])
+                            || !(*it)["params"])
                         return false;
 
                     DriveSlaveConfig config;
@@ -125,7 +110,6 @@ namespace YAML
                     config.slave_id = (*it)["slave_id"].as<int>();
                     config.name = (*it)["name"].as<std::string>();
                     config.params = (*it)["params"].as<DriveParams>();
-                    config.enabled = (*it)["enabled"].as<bool>();
 
                     mapping.push_back(config);
                 }
@@ -137,13 +121,6 @@ namespace YAML
     template<>
         struct convert<FtsSlaveMapping>
         {
-            static Node encode(const FtsSlaveMapping& mapping)
-            {
-                Node node;
-                // not implemented
-                return node;
-            }
-
             static bool decode(const Node& node, FtsSlaveMapping& mapping)
             {
                 if (!node.IsSequence())
@@ -172,13 +149,6 @@ namespace YAML
     template<>
         struct convert<ActiveJointParams>
         {
-            static Node encode(const ActiveJointParams& params)
-            {
-                Node node;
-                // not implemented
-                return node;
-            }
-
             static bool decode(const Node& node, ActiveJointParams& params)
             {
                 if (!node.IsMap())
@@ -188,8 +158,7 @@ namespace YAML
                         || !node["min_position_command_rad"]
                         || !node["max_position_command_rad"]
                         || !node["max_velocity_command_rad_sec"]
-                        || !node["max_torque_command_nm"]
-                        || !node["temp_offset_deg_c"])
+                        || !node["max_torque_command_nm"])
                     return false;
 
                 params.flip_sign = node["flip_sign"].as<bool>();
@@ -197,7 +166,6 @@ namespace YAML
                 params.max_position_command_rad = node["max_position_command_rad"].as<double>();
                 params.max_velocity_command_rad_sec = node["max_velocity_command_rad_sec"].as<double>();
                 params.max_torque_command_nm = node["max_torque_command_nm"].as<double>();
-                params.temp_offset_deg_c = node["temp_offset_deg_c"].as<double>();
 
                 return true;
             }
@@ -206,13 +174,6 @@ namespace YAML
     template<>
         struct convert<ActiveJointMapping>
         {
-            static Node encode(const ActiveJointMapping& mapping)
-            {
-                Node node;
-                // not implemented
-                return node;
-            }
-
             static bool decode(const Node& node, ActiveJointMapping& mapping)
             {
                 if (!node.IsSequence())
@@ -223,15 +184,21 @@ namespace YAML
                     if (!it->IsMap())
                         return false;
 
-                    if (!(*it)["name"] || !(*it)["drive"] || !(*it)["params"] || !(*it)["enabled"])
+                    if (!(*it)["name"]
+                            || !(*it)["drive"]
+                            || !(*it)["params"] 
+                            || !(*it)["temp_offset_deg_c"]
+                            || !(*it)["enabled"])
                         return false;
 
                     ActiveJointConfig config;
 
                     config.name = (*it)["name"].as<std::string>();
                     config.drive = (*it)["drive"].as<std::string>();
+
                     config.params = (*it)["params"].as<ActiveJointParams>();
                     config.enabled = (*it)["enabled"].as<bool>();
+                    config.params.temp_offset_deg_c = (*it)["temp_offset_deg_c"].as<double>();
 
                     mapping.push_back(config);
                 }
@@ -243,13 +210,6 @@ namespace YAML
     template<>
         struct convert<PassiveJointMapping>
         {
-            static Node encode(const PassiveJointMapping& mapping)
-            {
-                Node node;
-                // not implemented
-                return node;
-            }
-
             static bool decode(const Node& node, PassiveJointMapping& mapping)
             {
                 if (!node.IsSequence())
