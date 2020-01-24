@@ -34,7 +34,10 @@ PlatformDriverEthercatNode::~PlatformDriverEthercatNode()
 
 bool PlatformDriverEthercatNode::configureHook()
 {
-    YAML::Node config = YAML::LoadFile("marta.yaml");
+    this->declare_parameter("config_file", "");
+    std::string config_file = this->get_parameter("config_file").as_string();
+
+    YAML::Node config = YAML::LoadFile(config_file);
 
     if (!config["network_interface"]
             || !config["num_slaves"]
