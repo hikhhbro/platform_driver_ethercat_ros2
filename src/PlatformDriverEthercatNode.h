@@ -3,7 +3,9 @@
 #include <chrono>
 #include <memory>
 
-#include "rclcpp/rclcpp.hpp"
+#include "rclcpp_lifecycle/lifecycle_node.hpp"
+#include "rclcpp_lifecycle/lifecycle_publisher.hpp"
+
 #include "rover_msgs/msg/joint_command_array.hpp"
 #include "rover_msgs/msg/temperature_array.hpp"
 #include "rover_msgs/msg/wrench_stamped_array.hpp"
@@ -13,22 +15,33 @@
 #include "PlatformDriverEthercatNodeTypes.h"
 
 using namespace std::chrono_literals;
+using namespace rclcpp_lifecycle;
 
 namespace platform_driver_ethercat
 {
-
     class PlatformDriverEthercat;
 
-    class PlatformDriverEthercatNode : public rclcpp::Node
+    class PlatformDriverEthercatNode : public LifecycleNode
     {
         public:
             PlatformDriverEthercatNode();
             ~PlatformDriverEthercatNode();
 
         private:
+            node_interfaces::LifecycleNodeInterface::CallbackReturn on_configure(const State &);
+            node_interfaces::LifecycleNodeInterface::CallbackReturn on_activate(const State &);
+            node_interfaces::LifecycleNodeInterface::CallbackReturn on_deactivate(const State &);
+            node_interfaces::LifecycleNodeInterface::CallbackReturn on_cleanup(const State &);
+            node_interfaces::LifecycleNodeInterface::CallbackReturn on_shutdown(const State &);
+            node_interfaces::LifecycleNodeInterface::CallbackReturn on_error(const State &);
+
             bool configureHook();
             bool startHook();
             void updateHook();
+            void errorHook();
+            void stopHook();
+            void cleanupHook();
+
             bool validateConfig();
             void evalJointCommands(const rover_msgs::msg::JointCommandArray::SharedPtr joint_commands);
             void updateJointReadings();
@@ -36,9 +49,9 @@ namespace platform_driver_ethercat
             void updateTempReadings();
 
             rclcpp::TimerBase::SharedPtr timer_;
-            rclcpp::Publisher<sensor_msgs::msg::JointState>::SharedPtr joint_readings_publisher_;
-            rclcpp::Publisher<rover_msgs::msg::WrenchStampedArray>::SharedPtr fts_readings_publisher_;
-            rclcpp::Publisher<rover_msgs::msg::TemperatureArray>::SharedPtr temp_readings_publisher_;
+            LifecyclePublisher<sensor_msgs::msg::JointState>::SharedPtr joint_readings_publisher_;
+            LifecyclePublisher<rover_msgs::msg::WrenchStampedArray>::SharedPtr fts_readings_publisher_;
+            LifecyclePublisher<rover_msgs::msg::TemperatureArray>::SharedPtr temp_readings_publisher_;
             rclcpp::Subscription<rover_msgs::msg::JointCommandArray>::SharedPtr joint_commands_subscriber_;
 
             sensor_msgs::msg::JointState joint_readings_;
@@ -62,12 +75,4 @@ namespace platform_driver_ethercat
             bool first_window = true;
 
     };
-}
-
-int main(int argc, char * argv[])
-{
-    rclcpp::init(argc, argv);
-    rclcpp::spin(std::make_shared<platform_driver_ethercat::PlatformDriverEthercatNode>());
-    rclcpp::shutdown();
-    return 0;
 }

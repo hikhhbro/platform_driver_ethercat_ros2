@@ -10,26 +10,70 @@ static std::stringstream ss;
 
 using namespace platform_driver_ethercat;
 
-
 PlatformDriverEthercatNode::PlatformDriverEthercatNode()
-    : Node("platform_driver_ethercat")
+    : LifecycleNode("platform_driver_ethercat")
 {
-    joint_readings_publisher_ = this->create_publisher<sensor_msgs::msg::JointState>("joint_readings", 10);
-    fts_readings_publisher_ = this->create_publisher<rover_msgs::msg::WrenchStampedArray>("fts_readings", 10);
-    temp_readings_publisher_ = this->create_publisher<rover_msgs::msg::TemperatureArray>("temp_readings", 10);
-
-    configureHook();
-    startHook();
-
-    timer_ = this->create_wall_timer(
-            10ms, std::bind(&PlatformDriverEthercatNode::updateHook, this));
-
-    joint_commands_subscriber_ = this->create_subscription<rover_msgs::msg::JointCommandArray>("joint_commands", 10, std::bind(&PlatformDriverEthercatNode::evalJointCommands, this, std::placeholders::_1));
 }
 
 PlatformDriverEthercatNode::~PlatformDriverEthercatNode()
 {
-    platform_driver_->shutdownPlatform();
+}
+
+
+node_interfaces::LifecycleNodeInterface::CallbackReturn PlatformDriverEthercatNode::on_configure(const State &)
+{
+    if (!configureHook())
+        return node_interfaces::LifecycleNodeInterface::CallbackReturn::FAILURE;
+
+    joint_readings_publisher_ = this->create_publisher<sensor_msgs::msg::JointState>("joint_readings", 10);
+    fts_readings_publisher_ = this->create_publisher<rover_msgs::msg::WrenchStampedArray>("fts_readings", 10);
+    temp_readings_publisher_ = this->create_publisher<rover_msgs::msg::TemperatureArray>("temp_readings", 10);
+
+    joint_commands_subscriber_ = this->create_subscription<rover_msgs::msg::JointCommandArray>("joint_commands", 10, std::bind(&PlatformDriverEthercatNode::evalJointCommands, this, std::placeholders::_1));
+    return node_interfaces::LifecycleNodeInterface::CallbackReturn::SUCCESS;
+}
+
+node_interfaces::LifecycleNodeInterface::CallbackReturn PlatformDriverEthercatNode::on_activate(const State &)
+{
+    if (!startHook())
+        return node_interfaces::LifecycleNodeInterface::CallbackReturn::FAILURE;
+
+    joint_readings_publisher_->on_activate();
+    fts_readings_publisher_->on_activate();
+    temp_readings_publisher_->on_activate();
+
+    timer_ = this->create_wall_timer(
+            10ms, std::bind(&PlatformDriverEthercatNode::updateHook, this));
+
+    return node_interfaces::LifecycleNodeInterface::CallbackReturn::SUCCESS;
+}
+
+node_interfaces::LifecycleNodeInterface::CallbackReturn PlatformDriverEthercatNode::on_deactivate(const State &)
+{
+    joint_readings_publisher_->on_deactivate();
+    fts_readings_publisher_->on_deactivate();
+    temp_readings_publisher_->on_deactivate();
+
+    stopHook();
+
+    return node_interfaces::LifecycleNodeInterface::CallbackReturn::SUCCESS;
+}
+
+node_interfaces::LifecycleNodeInterface::CallbackReturn PlatformDriverEthercatNode::on_cleanup(const State &)
+{
+    cleanupHook();
+    return node_interfaces::LifecycleNodeInterface::CallbackReturn::SUCCESS;
+}
+
+node_interfaces::LifecycleNodeInterface::CallbackReturn PlatformDriverEthercatNode::on_shutdown(const State &)
+{
+    return node_interfaces::LifecycleNodeInterface::CallbackReturn::SUCCESS;
+}
+
+node_interfaces::LifecycleNodeInterface::CallbackReturn PlatformDriverEthercatNode::on_error(const State &)
+{
+    errorHook();
+    return node_interfaces::LifecycleNodeInterface::CallbackReturn::SUCCESS;
 }
 
 bool PlatformDriverEthercatNode::configureHook()
@@ -140,6 +184,18 @@ void PlatformDriverEthercatNode::updateHook()
     //message.data = "Hello, world! " + std::to_string(count_++);
     //publisher_->publish(message);
 }
+
+void PlatformDriverEthercatNode::errorHook()
+{
+    platform_driver_->shutdownPlatform();
+}
+
+void PlatformDriverEthercatNode::stopHook()
+{
+    platform_driver_->shutdownPlatform();
+}
+
+void PlatformDriverEthercatNode::cleanupHook() {}
 
 bool PlatformDriverEthercatNode::validateConfig()
 {
