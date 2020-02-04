@@ -30,6 +30,7 @@ node_interfaces::LifecycleNodeInterface::CallbackReturn PlatformDriverEthercatNo
     temp_readings_publisher_ = this->create_publisher<rover_msgs::msg::TemperatureArray>("temp_readings", 10);
 
     joint_commands_subscriber_ = this->create_subscription<rover_msgs::msg::JointCommandArray>("joint_commands", 10, std::bind(&PlatformDriverEthercatNode::evalJointCommands, this, std::placeholders::_1));
+
     return node_interfaces::LifecycleNodeInterface::CallbackReturn::SUCCESS;
 }
 
@@ -54,6 +55,8 @@ node_interfaces::LifecycleNodeInterface::CallbackReturn PlatformDriverEthercatNo
     fts_readings_publisher_->on_deactivate();
     temp_readings_publisher_->on_deactivate();
 
+    timer_.reset();
+
     stopHook();
 
     return node_interfaces::LifecycleNodeInterface::CallbackReturn::SUCCESS;
@@ -62,17 +65,33 @@ node_interfaces::LifecycleNodeInterface::CallbackReturn PlatformDriverEthercatNo
 node_interfaces::LifecycleNodeInterface::CallbackReturn PlatformDriverEthercatNode::on_cleanup(const State &)
 {
     cleanupHook();
+
+    joint_readings_publisher_.reset();
+    fts_readings_publisher_.reset();
+    temp_readings_publisher_.reset();
+
+    joint_commands_subscriber_.reset();
+
     return node_interfaces::LifecycleNodeInterface::CallbackReturn::SUCCESS;
 }
 
 node_interfaces::LifecycleNodeInterface::CallbackReturn PlatformDriverEthercatNode::on_shutdown(const State &)
 {
+    joint_readings_publisher_.reset();
+    fts_readings_publisher_.reset();
+    temp_readings_publisher_.reset();
+
+    joint_commands_subscriber_.reset();
+
+    timer_.reset();
+
     return node_interfaces::LifecycleNodeInterface::CallbackReturn::SUCCESS;
 }
 
 node_interfaces::LifecycleNodeInterface::CallbackReturn PlatformDriverEthercatNode::on_error(const State &)
 {
     errorHook();
+
     return node_interfaces::LifecycleNodeInterface::CallbackReturn::SUCCESS;
 }
 
