@@ -1,24 +1,23 @@
 <?xml version="1.0"?>
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
-  <name>platform_driver_ethercat</name>
+  <name>platform_driver_ethercat_node</name>
   <version>0.0.0</version>
   <description>TODO: Package description</description>
   <maintainer email="marta@todo.todo">marta</maintainer>
   <license>TODO: License declaration</license>
 
-  <build_depend>eigen</build_depend>
+  <build_depend>platform_driver_ethercat</build_depend>
   <build_depend>rclcpp</build_depend>
   <build_depend>rclcpp_lifecycle</build_depend>
-  <build_depend>soem</build_depend>
   <build_depend>yaml-cpp</build_depend>
   <build_depend>geometry_msgs</build_depend>
   <build_depend>rover_msgs</build_depend>
   <build_depend>sensor_msgs</build_depend>
 
+  <exec_depend>platform_driver_ethercat</exec_depend>
   <exec_depend>rclcpp</exec_depend>
   <exec_depend>rclcpp_lifecycle</exec_depend>
-  <exec_depend>soem</exec_depend>
   <exec_depend>yaml-cpp</exec_depend>
   <exec_depend>geometry_msgs</exec_depend>
   <exec_depend>rover_msgs</exec_depend>
