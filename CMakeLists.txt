@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.5)
-project(platform_driver_ethercat_node)
+project(platform_driver_ethercat)
 
 # Default to C++14
 if(NOT CMAKE_CXX_STANDARD)
@@ -15,7 +15,7 @@ set(CMAKE_EXE_LINKER_FLAGS "-Wl,--disable-new-dtags")  # use RPATH instead of RU
 
 # find dependencies
 find_package(ament_cmake REQUIRED)
-find_package(platform_driver_ethercat REQUIRED)
+find_package(platform_driver_ethercat_lib REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(rclcpp_lifecycle REQUIRED)
 find_package(yaml-cpp REQUIRED)
@@ -34,7 +34,7 @@ add_executable(${PROJECT_NAME} ${MY_SOURCES})
 # specify include paths and dependencies
 target_include_directories(${PROJECT_NAME} PRIVATE src)
 target_link_libraries(${PROJECT_NAME} yaml-cpp PkgConfig::SOEM)
-ament_target_dependencies(${PROJECT_NAME} platform_driver_ethercat rclcpp rclcpp_lifecycle geometry_msgs rover_msgs sensor_msgs)
+ament_target_dependencies(${PROJECT_NAME} platform_driver_ethercat_lib rclcpp rclcpp_lifecycle geometry_msgs rover_msgs sensor_msgs)
 
 # install target at destination
 install(
