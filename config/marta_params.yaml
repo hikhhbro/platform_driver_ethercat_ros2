@@ -1,3 +1,3 @@
 platform_driver_ethercat:
   ros__parameters:
-    config_file: "/home/marta/ros2_ws/marta_ws/src/platform_driver_ethercat/config/marta.yaml"
+    config_file: "/home/marta/ros2/marta_ws/src/platform_driver_ethercat/config/marta.yaml"
