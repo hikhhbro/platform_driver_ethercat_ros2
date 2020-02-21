@@ -23,8 +23,15 @@ PlatformDriverEthercatNode::~PlatformDriverEthercatNode()
 
 node_interfaces::LifecycleNodeInterface::CallbackReturn PlatformDriverEthercatNode::on_configure(const State &)
 {
-    if (!configureHook())
+    if (configureHook())
+    {
+        RCLCPP_INFO(rclcpp::get_logger(__PRETTY_FUNCTION__), "Configuration of platform driver successful");
+    }
+    else
+    {
+        RCLCPP_ERROR(rclcpp::get_logger(__PRETTY_FUNCTION__), "Configuration of platform driver failed");
         return node_interfaces::LifecycleNodeInterface::CallbackReturn::FAILURE;
+    }
 
     joint_readings_publisher_ = this->create_publisher<sensor_msgs::msg::JointState>("joint_readings", 10);
     fts_readings_publisher_ = this->create_publisher<rover_msgs::msg::WrenchStampedArray>("fts_readings", 10);
