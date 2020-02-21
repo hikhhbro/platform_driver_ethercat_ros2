@@ -77,6 +77,13 @@ node_interfaces::LifecycleNodeInterface::CallbackReturn PlatformDriverEthercatNo
 
 node_interfaces::LifecycleNodeInterface::CallbackReturn PlatformDriverEthercatNode::on_shutdown(const State &)
 {
+    std::cout << "shutting down" << std::endl;
+
+    if (platform_driver_ != NULL)
+    {
+        platform_driver_->shutdownPlatform();
+    }
+
     joint_readings_publisher_.reset();
     fts_readings_publisher_.reset();
     temp_readings_publisher_.reset();
