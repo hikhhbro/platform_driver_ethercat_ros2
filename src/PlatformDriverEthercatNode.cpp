@@ -13,6 +13,7 @@ using namespace platform_driver_ethercat;
 PlatformDriverEthercatNode::PlatformDriverEthercatNode()
     : LifecycleNode("platform_driver_ethercat")
 {
+    this->declare_parameter("config_file", "");
 }
 
 PlatformDriverEthercatNode::~PlatformDriverEthercatNode()
@@ -104,7 +105,6 @@ node_interfaces::LifecycleNodeInterface::CallbackReturn PlatformDriverEthercatNo
 
 bool PlatformDriverEthercatNode::configureHook()
 {
-    this->declare_parameter("config_file", "");
     std::string config_file = this->get_parameter("config_file").as_string();
 
     YAML::Node config = YAML::LoadFile(config_file);
