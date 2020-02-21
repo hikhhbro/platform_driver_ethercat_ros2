@@ -224,7 +224,10 @@ void PlatformDriverEthercatNode::stopHook()
     platform_driver_->shutdownPlatform();
 }
 
-void PlatformDriverEthercatNode::cleanupHook() {}
+void PlatformDriverEthercatNode::cleanupHook()
+{
+    platform_driver_.reset();
+}
 
 bool PlatformDriverEthercatNode::validateConfig()
 {
