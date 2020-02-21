@@ -170,17 +170,20 @@ bool PlatformDriverEthercatNode::configureHook()
         ++i;
     }
 
-    return true;
-}
-
-bool PlatformDriverEthercatNode::startHook()
-{
     if (platform_driver_->initPlatform())
     {
         return true;
     }
+    else
+    {
+        platform_driver_.reset();
+        return false;
+    }
+}
 
-    return false;
+bool PlatformDriverEthercatNode::startHook()
+{
+    return platform_driver_->startupPlatform();
 }
 
 void PlatformDriverEthercatNode::updateHook()
