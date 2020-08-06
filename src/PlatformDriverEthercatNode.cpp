@@ -33,11 +33,11 @@ node_interfaces::LifecycleNodeInterface::CallbackReturn PlatformDriverEthercatNo
         return node_interfaces::LifecycleNodeInterface::CallbackReturn::FAILURE;
     }
 
-    joint_readings_publisher_ = this->create_publisher<sensor_msgs::msg::JointState>("joint_readings", 10);
+    joint_readings_publisher_ = this->create_publisher<sensor_msgs::msg::JointState>("joint_states", 10);
     fts_readings_publisher_ = this->create_publisher<rover_msgs::msg::WrenchStampedArray>("fts_readings", 10);
     temp_readings_publisher_ = this->create_publisher<rover_msgs::msg::TemperatureArray>("temp_readings", 10);
 
-    joint_commands_subscriber_ = this->create_subscription<rover_msgs::msg::JointCommandArray>("joint_commands", 10, std::bind(&PlatformDriverEthercatNode::evalJointCommands, this, std::placeholders::_1));
+    joint_commands_subscriber_ = this->create_subscription<rover_msgs::msg::JointCommandArray>("joint_cmds", 10, std::bind(&PlatformDriverEthercatNode::evalJointCommands, this, std::placeholders::_1));
 
     return node_interfaces::LifecycleNodeInterface::CallbackReturn::SUCCESS;
 }
