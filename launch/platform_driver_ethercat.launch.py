@@ -7,12 +7,12 @@ def generate_launch_description():
 
     # Create pd node
     pd_node = launch_ros.actions.LifecycleNode(
-            package = 'platform_driver_ethercat',
-            node_executable = 'platform_driver_ethercat',
-            node_name = 'platform_driver_ethercat',
+            package = 'platform_driver_ethercat_ros2',
+            node_executable = 'platform_driver_ethercat_node',
+            node_name = 'platform_driver_ethercat_node',
             output = 'screen',
             arguments = ['--ros-args', '--log-level', 'debug'],
-            parameters = [{'config_file': '/home/marta/ros2/marta_ws/src/platform_driver_ethercat/config/marta.yaml'}]
+            parameters = [{'config_file': '/home/marta/ros/dev_ws/src/platform_driver_ethercat_ros2/config/marta.yaml'}]
     )
 
     # Make the pd node take the 'configure' transition
