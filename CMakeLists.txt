@@ -28,22 +28,24 @@ find_package(PkgConfig REQUIRED)
 pkg_check_modules(SOEM REQUIRED IMPORTED_TARGET soem)
 
 # add executable
+set(NODE_NAME "platform_driver_ethercat_node")
 file(GLOB MY_SOURCES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} src/*.cpp)
-add_executable(${PROJECT_NAME} ${MY_SOURCES})
+add_executable(${NODE_NAME} ${MY_SOURCES})
 
 # specify include paths and dependencies
-target_include_directories(${PROJECT_NAME} PRIVATE src)
-target_link_libraries(${PROJECT_NAME} yaml-cpp PkgConfig::SOEM)
-ament_target_dependencies(${PROJECT_NAME} platform_driver_ethercat rclcpp rclcpp_lifecycle geometry_msgs rover_msgs sensor_msgs)
+target_include_directories(${NODE_NAME} PRIVATE src)
+target_link_libraries(${NODE_NAME} yaml-cpp PkgConfig::SOEM)
+ament_target_dependencies(${NODE_NAME} platform_driver_ethercat rclcpp rclcpp_lifecycle geometry_msgs rover_msgs sensor_msgs)
 
 # install target at destination
 install(
-  TARGETS ${PROJECT_NAME}
+    TARGETS ${NODE_NAME}
   DESTINATION lib/${PROJECT_NAME}
 )
 
+
 # set capabilities of executable for raw network interface access
-install(CODE "execute_process(COMMAND sudo /sbin/setcap CAP_NET_RAW=ep \"${CMAKE_INSTALL_PREFIX}/lib/${PROJECT_NAME}/${PROJECT_NAME}\")")
+install(CODE "execute_process(COMMAND sudo /sbin/setcap CAP_NET_RAW=ep \"${CMAKE_INSTALL_PREFIX}/lib/${PROJECT_NAME}/${NODE_NAME}\")")
 
 # install launch files
 install(
