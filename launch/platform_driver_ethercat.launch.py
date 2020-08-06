@@ -35,7 +35,7 @@ def generate_launch_description():
     pd_inactive_state_handler = launch.actions.RegisterEventHandler(
         launch_ros.event_handlers.OnStateTransition(
             target_lifecycle_node = pd_node,
-            start_state = 'unconfigured',
+            start_state = 'configuring',
             goal_state = 'inactive',
             entities = [pd_activate_event]
         )
