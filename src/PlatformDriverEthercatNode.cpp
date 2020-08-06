@@ -372,11 +372,11 @@ void PlatformDriverEthercatNode::evalJointCommands(const rover_msgs::msg::JointC
     {
         rover_msgs::msg::JointCommand& joint(joint_commands->joint_command_array[i]);
 
-        if (joint.mode == "position")
+        if (joint.mode == "POSITION")
         {
             platform_driver_->commandJointPositionRad(joint.name, joint.value);
         }
-        else if (joint.mode == "velocity")
+        else if (joint.mode == "VELOCITY")
         {
             platform_driver_->commandJointVelocityRadSec(joint.name, joint.value);
         }
