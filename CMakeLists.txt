@@ -39,13 +39,16 @@ ament_target_dependencies(${NODE_NAME} platform_driver_ethercat rclcpp rclcpp_li
 
 # install target at destination
 install(
-    TARGETS ${NODE_NAME}
+  TARGETS ${NODE_NAME}
   DESTINATION lib/${PROJECT_NAME}
 )
 
-
 # set capabilities of executable for raw network interface access
-install(CODE "execute_process(COMMAND sudo /sbin/setcap CAP_NET_RAW=ep \"${CMAKE_INSTALL_PREFIX}/lib/${PROJECT_NAME}/${NODE_NAME}\")")
+if(AMENT_CMAKE_SYMLINK_INSTALL)
+  install(CODE "execute_process(COMMAND sudo /sbin/setcap CAP_NET_RAW=ep \"${CMAKE_CURRENT_BINARY_DIR}/${NODE_NAME}\")")
+else()
+  install(CODE "execute_process(COMMAND sudo /sbin/setcap CAP_NET_RAW=ep \"${CMAKE_INSTALL_PREFIX}/lib/${PROJECT_NAME}/${NODE_NAME}\")")
+endif()
 
 # install launch files
 install(
