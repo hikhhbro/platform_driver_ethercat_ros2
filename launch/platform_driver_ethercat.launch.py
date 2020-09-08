@@ -1,18 +1,29 @@
+import ament_index_python
 import launch
 import launch_ros
 import lifecycle_msgs
+import os
 
 def generate_launch_description():
-    ld = launch.LaunchDescription()
+    default_pd_config_file_path = os.path.join(
+        ament_index_python.packages.get_package_share_directory('platform_driver_ethercat_ros2'),
+        'config',
+        'marta.yaml'
+    )
+
+    # Launch declarations
+    declare_pd_config_file_path_cmd = launch.actions.DeclareLaunchArgument(
+        'pd_config_file_path',
+        default_value = default_pd_config_file_path,
+        description = 'Full path to the platform_driver_ethercat_ros2 config file'
+    )
 
     # Create pd node
     pd_node = launch_ros.actions.LifecycleNode(
-            package = 'platform_driver_ethercat_ros2',
-            node_executable = 'platform_driver_ethercat_node',
-            node_name = 'platform_driver_ethercat_node',
-            output = 'screen',
-            arguments = ['--ros-args', '--log-level', 'debug'],
-            parameters = [{'config_file': '/home/marta/ros/dev_ws/src/platform_driver_ethercat_ros2/config/marta.yaml'}]
+        package = 'platform_driver_ethercat_ros2',
+        executable = 'platform_driver_ethercat_node',
+        name = 'platform_driver_ethercat_node',
+        parameters = [{'config_file': launch.substitutions.LaunchConfiguration('pd_config_file_path')}]
     )
 
     # Make the pd node take the 'configure' transition
@@ -41,8 +52,12 @@ def generate_launch_description():
         )
     )
 
-    ld.add_action(pd_inactive_state_handler)
-    ld.add_action(pd_node)
-    ld.add_action(pd_configure_event)
+    return launch.LaunchDescription([
+        # Set env var to print messages colored. The ANSI color codes will appear in a log.
+        #launch.actions.SetEnvironmentVariable('RCUTILS_COLORIZED_OUTPUT', '1'),
 
-    return ld
+        declare_pd_config_file_path_cmd,
+        pd_inactive_state_handler,
+        pd_node,
+        pd_configure_event,
+    ])
