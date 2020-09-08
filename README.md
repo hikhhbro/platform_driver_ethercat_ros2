@@ -2,7 +2,7 @@
 
 ## Overview
 
-This package provides a ROS 2 lifecycle node to interface with the `platform_driver_ethercat` library for accessing Elmo drives and ATI force torque sensors via EtherCAT.
+This package provides a ROS 2 lifecycle node to interface with the [platform_driver_ethercat] library for accessing Elmo drives and ATI force torque sensors via EtherCAT.
 
 **Keywords:** ati fts, elmo, ethercat, joint control, soem
 
@@ -23,7 +23,7 @@ This package has been tested under [ROS2] Foxy Fitzroy and Ubuntu 20.04. This is
 #### Dependencies
 
 - [Robot Operating System (ROS)](http://wiki.ros.org) (middleware for robotics)
-- [platform_driver_ethercat](https://github.com/esa-prl/drivers-platform_driver_ethercat) (library for Elmo Gold Twitter and ATI FTS communication over EtherCAT using SOEM)
+- [platform_driver_ethercat] (library for Elmo Gold Twitter and ATI FTS communication over EtherCAT using [SOEM]
 - [rover_msgs](https://github.com/esa-prl/rover_msgs) (message definitions for ESA-PRL rovers)
 - [yaml-cpp](https://github.com/jbeder/yaml-cpp) (a YAML parser and emitter in C++)
 
@@ -38,42 +38,68 @@ To build from source, clone the latest version from this repository into your ro
 
 ## Usage
 
-Since the `platform_driver_ethercat` library uses SOEM which needs raw socket access, the node needs to be run with root privileges. This could be circumvented in the future with `setcap` and https://github.com/ros2/rcpputils/pull/44.
+Since the [platform_driver_ethercat] library uses [SOEM] which needs raw socket access, the node needs to be run with root privileges. This could be circumvented in the future with `setcap` and https://github.com/ros2/rcpputils/pull/44.
 
 Change into a root shell while preserving your environment with
 
-    sudo -s -E
+    sudo -sE
 
-Then run the main node with
+Then launch the main node with
 
-	ros2 run platform_driver_ethercat_ros2 platform_driver_ethercat_node --ros-args -p config_file:=/path/to/config/file
-
-The node is a lifecycle node and thus needs to take the `configure` and `activate` transitions in order to be fully operable.
-
-If the node is run as part of a launch file, that launch file needs to be executed with root privileges as well. 
-
-## Config files
-
-Config file config/
-
-* **marta.yaml** Configuration file for the MaRTA rover, to configure SOEM, Elmo drives and joints. This is NOT a regular ROS 2 parameter file. It makes use of advanced yaml features and is parsed inside the node.
+	ros2 launch platform_driver_ethercat_ros2 platform_driver_ethercat.launch.py pd_config_file:=/path/to/config/file
 
 ## Launch files
 
-* **platform_driver_ethercat.launch.py:** Minimal launch file to start the node and bring it to the `Active` state. Needs to be executed with root privileges.
+launch/
+
+* **platform_driver_ethercat.launch.py** Minimal launch file to start the node and bring it to the `Active` state. Needs to be executed with root privileges.
 
     Arguments:
 
-    - **`config_file`** Full path to the platform_driver_ethercat_ros2 config file
+    - **`pd_config_file`** Full path to the configuration file
+
+## Config files
+
+config/
+
+* **pd_marta.yaml** Configuration file for the MaRTA rover, to configure SOEM, Elmo drives and joints. This is NOT a regular ROS 2 parameter file. It makes use of advanced yaml features and is parsed inside the node.
 
 ## Nodes
 
 ### platform_driver_ethercat_node
 
-Lifecycle node to interface with the platform_driver_ethercat library.
+Lifecycle node to interface with the [platform_driver_ethercat] library.
+
+#### Subscribed Topics
+
+* **`joint_cmds`** ([rover_msgs/JointCommandArray](https://github.com/esa-prl/rover_msgs))
+
+	Commanded position, velocity or torque for joints
+
+#### Published Topics
+
+* **`joint_states`** ([sensor_msgs/JointState](http://docs.ros.org/melodic/api/sensor_msgs/html/msg/JointState.html))
+
+	Measured position, velocity and effort of joints
+
+* **`fts_readings`** ([rover_msgs/WrenchStampedArray](https://github.com/esa-prl/rover_msgs))
+
+	Measured force and torque values of sensors
+
+* **`temp_readings`** ([rover_msgs/TemperatureArray](https://github.com/esa-prl/rover_msgs))
+
+	Measured temperatures in degree Celsius
+
+#### Parameters
+
+* **`config_file`** (string)
+
+	Full path to the configuration file
 
 ## Bugs & Feature Requests
 
 Please report bugs and request features using the github issue tracker.
 
+[platform_driver_ethercat]: https://github.com/esa-prl/drivers-platform_driver_ethercat
 [ROS2]: http://www.ros.org
+[SOEM]: https://github.com/OpenEtherCATsociety/SOEM
