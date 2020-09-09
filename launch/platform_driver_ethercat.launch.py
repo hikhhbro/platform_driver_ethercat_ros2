@@ -8,12 +8,12 @@ def generate_launch_description():
     default_pd_config_file_path = os.path.join(
         ament_index_python.packages.get_package_share_directory('platform_driver_ethercat_ros2'),
         'config',
-        'marta.yaml'
+        'pd_marta.yaml'
     )
 
     # Launch declarations
     declare_pd_config_file_path_cmd = launch.actions.DeclareLaunchArgument(
-        'pd_config_file_path',
+        'pd_config_file',
         default_value = default_pd_config_file_path,
         description = 'Full path to the platform_driver_ethercat_ros2 config file'
     )
@@ -23,7 +23,7 @@ def generate_launch_description():
         package = 'platform_driver_ethercat_ros2',
         executable = 'platform_driver_ethercat_node',
         name = 'platform_driver_ethercat_node',
-        parameters = [{'config_file': launch.substitutions.LaunchConfiguration('pd_config_file_path')}]
+        parameters = [{'config_file': launch.substitutions.LaunchConfiguration('pd_config_file')}]
     )
 
     # Make the pd node take the 'configure' transition
