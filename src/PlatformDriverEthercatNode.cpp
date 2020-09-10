@@ -1,9 +1,10 @@
-#include <PlatformDriverEthercat.h>
+#include "PlatformDriverEthercatNode.h"
+
 #include <sys/stat.h>
 #include <sstream>
 #include <set>
 
-#include "PlatformDriverEthercatNode.h"
+#include "PlatformDriverEthercat.h"
 #include "yaml-cpp/yaml.h"
 
 static std::stringstream ss;
@@ -19,7 +20,6 @@ PlatformDriverEthercatNode::PlatformDriverEthercatNode()
 PlatformDriverEthercatNode::~PlatformDriverEthercatNode()
 {
 }
-
 
 node_interfaces::LifecycleNodeInterface::CallbackReturn PlatformDriverEthercatNode::on_configure(const State &)
 {
@@ -206,19 +206,14 @@ void PlatformDriverEthercatNode::updateHook()
     updateFtsReadings();
     updateTempReadings();
 
-    //joint_readings_.time = base::Time::now();
+    joint_readings_.header.stamp = this->now();
     joint_readings_publisher_->publish(joint_readings_);
 
-    //fts_readings_.time = base::Time::now();
+    fts_readings_.header.stamp = this->now();
     fts_readings_publisher_->publish(fts_readings_);
 
-    //temp_readings_.time = base::Time::now();
+    temp_readings_.header.stamp = this->now();
     temp_readings_publisher_->publish(temp_readings_);
-
-    // LOG_DEBUG_S << __PRETTY_FUNCTION__ << ": " << base::Time::now();
-    //auto message = std_msgs::msg::String();
-    //message.data = "Hello, world! " + std::to_string(count_++);
-    //publisher_->publish(message);
 }
 
 void PlatformDriverEthercatNode::errorHook()
@@ -429,15 +424,17 @@ void PlatformDriverEthercatNode::updateFtsReadings()
         platform_driver_->readFtsForceN(fts_params.name, fx, fy, fz);
         platform_driver_->readFtsTorqueNm(fts_params.name, tx, ty, tz);
 
-        geometry_msgs::msg::Wrench& wrench(fts_readings_.wrenches[i].wrench);
+        geometry_msgs::msg::WrenchStamped& wrench_msg(fts_readings_.wrenches[i]);
 
-        wrench.force.x = fx;
-        wrench.force.y = fy;
-        wrench.force.z = fz;
+        wrench_msg.header.stamp = this->now();
 
-        wrench.torque.x = tx;
-        wrench.torque.y = ty;
-        wrench.torque.z = tz;
+        wrench_msg.wrench.force.x = fx;
+        wrench_msg.wrench.force.y = fy;
+        wrench_msg.wrench.force.z = fz;
+
+        wrench_msg.wrench.torque.x = tx;
+        wrench_msg.wrench.torque.y = ty;
+        wrench_msg.wrench.torque.z = tz;
 
         ++i;
     }
@@ -451,16 +448,20 @@ void PlatformDriverEthercatNode::updateTempReadings()
         double joint_temp;
         platform_driver_->readJointTempDegC(joint.name, joint_temp);
 
+        sensor_msgs::msg::Temperature& temperature_msg(temp_readings_.temperatures[i]);
+
+        temperature_msg.header.stamp = this->now();
+
         temp_sums[i] += joint_temp - temp_values[i][temp_index];
         temp_values[i][temp_index] = joint_temp;
 
         if (first_window)
         {
-            temp_readings_.temperatures[i].temperature = temp_sums[i] / (1.0 * (temp_index + 1));
+            temperature_msg.temperature = temp_sums[i] / (1.0 * (temp_index + 1));
         }
         else
         {
-            temp_readings_.temperatures[i].temperature = temp_sums[i] / (1.0 * window_size);
+            temperature_msg.temperature = temp_sums[i] / (1.0 * window_size);
         }
 
         ++i;

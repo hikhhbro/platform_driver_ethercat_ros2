@@ -73,6 +73,5 @@ namespace platform_driver_ethercat
             std::vector<double> temp_sums;
             int temp_index = 0;
             bool first_window = true;
-
     };
 }
