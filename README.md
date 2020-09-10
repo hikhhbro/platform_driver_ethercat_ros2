@@ -62,7 +62,7 @@ launch/
 
 config/
 
-* **pd_marta.yaml** Configuration file for the MaRTA rover, to configure SOEM, Elmo drives and joints. This is NOT a regular ROS 2 parameter file. It makes use of advanced yaml features and is parsed inside the node.
+* **pd_marta.yaml** Configuration file for the MaRTA rover, to configure SOEM, Elmo drives and joints. This is **NOT** a regular ROS 2 parameter file. It makes use of advanced yaml features and is parsed inside the node.
 
 ## Nodes
 
@@ -74,13 +74,13 @@ Lifecycle node to interface with the [platform_driver_ethercat] library.
 
 * **`joint_cmds`** ([rover_msgs/JointCommandArray](https://github.com/esa-prl/rover_msgs))
 
-	Commanded position, velocity or torque for joints
+	Commanded position, velocity or torque for joints.
 
 #### Published Topics
 
 * **`joint_states`** ([sensor_msgs/JointState](http://docs.ros.org/melodic/api/sensor_msgs/html/msg/JointState.html))
 
-	Measured position, velocity and effort of joints
+	Measured position, velocity and effort of joints.
 
 * **`fts_readings`** ([rover_msgs/WrenchStampedArray](https://github.com/esa-prl/rover_msgs))
 
@@ -88,17 +88,17 @@ Lifecycle node to interface with the [platform_driver_ethercat] library.
 
 * **`temp_readings`** ([rover_msgs/TemperatureArray](https://github.com/esa-prl/rover_msgs))
 
-	Measured temperatures in degree Celsius
+	Measured temperatures in degree Celsius.
 
 #### Parameters
 
 * **`config_file`** (string)
 
-	Full path to the configuration file
+	Full path to the configuration file.
 
 ## Bugs & Feature Requests
 
-Please report bugs and request features using the github issue tracker.
+Please report bugs and request features using the GitHub issue tracker.
 
 [platform_driver_ethercat]: https://github.com/esa-prl/drivers-platform_driver_ethercat
 [ROS2]: http://www.ros.org
