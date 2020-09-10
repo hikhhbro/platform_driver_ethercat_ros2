@@ -182,4 +182,4 @@ active_joint_mapping:
 passive_joint_mapping:
     - {name: joint_bogie_LFB, drive: ELMO_DRIVE_FL, enabled: true}
     - {name: joint_bogie_RFB, drive: ELMO_DRIVE_FR, enabled: true}
-    - {name: joint_bogie_MRB, drive: ELMO_DRIVE_BL, enabled: true}
+    - {name: joint_bogie_MRB, drive: ELMO_DRIVE_BR, enabled: true}
