@@ -43,12 +43,13 @@ install(
   DESTINATION lib/${PROJECT_NAME}
 )
 
-# set capabilities of executable for raw network interface access
-if(AMENT_CMAKE_SYMLINK_INSTALL)
-  install(CODE "execute_process(COMMAND sudo /sbin/setcap CAP_NET_RAW=ep \"${CMAKE_CURRENT_BINARY_DIR}/${NODE_NAME}\")")
-else()
-  install(CODE "execute_process(COMMAND sudo /sbin/setcap CAP_NET_RAW=ep \"${CMAKE_INSTALL_PREFIX}/lib/${PROJECT_NAME}/${NODE_NAME}\")")
-endif()
+## set capabilities of executable for raw socket access to allow non-root execution
+## currently not working due to https://github.com/ros2/rcpputils/issues/40
+# if(AMENT_CMAKE_SYMLINK_INSTALL)
+#   install(CODE "execute_process(COMMAND sudo /sbin/setcap CAP_NET_RAW=ep \"${CMAKE_CURRENT_BINARY_DIR}/${NODE_NAME}\")")
+# else()
+#   install(CODE "execute_process(COMMAND sudo /sbin/setcap CAP_NET_RAW=ep \"${CMAKE_INSTALL_PREFIX}/lib/${PROJECT_NAME}/${NODE_NAME}\")")
+# endif()
 
 # install launch files
 install(
