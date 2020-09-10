@@ -1,3 +1,5 @@
+### This is **NOT** a regular ROS 2 parameter file. It is parsed inside the node.
+
 ## ethercat configuration
 
 # ethercat network interface
